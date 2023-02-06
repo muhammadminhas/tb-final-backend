@@ -61,59 +61,6 @@ predictor=0
 model = pickle.load(open('pickels/RFPreprocessed.pkl','rb'))
 KNNPreprocessed = pickle.load(open('pickels/KNNPreprocessed.pkl','rb'))
 KNN = pickle.load(open('pickels/KNNSimple.pkl','rb'))
-# arrpred=nm.array([],dtype=int)
-
-# data2= data2.loc[:, data2.columns != "outcome"]
-# # for x in range(2400):
-# #     if(data["outcome"][x]=="Cured"):
-# #         print(x)
-# print("inverse:",mlmodel.inverselabel(data2.columns[0],"Belarus"))
-# print(data2)
-# for x in range(data.columns.size-1):
-#     arrpred=nm.append(arrpred,mlmodel.inverselabel(data2.columns[x],data2[data2.columns[x]][0]))
- 
-# print(arrpred)
-# np_array = nm.array(arrpred)
-# arrpred=np_array.reshape(1, -1)
-# arrpred=st_x.transform(arrpred)
-# print(model.predict(arrpred))
-
-
-
-    # def predict():
-    #         data=pd.read_csv("AllMerge.csv")
-    #         col="outcome"
-    #         le = preprocessing.LabelEncoder()
-    #         data=data.apply(le.fit_transform)
-    #         x= data.loc[:, data.columns != col]
-    #         y=data.loc[:, data.columns == col]
-    #         smt = SMOTE()
-    #         X_smote, y_smote = smt.fit_resample(x, y)
-    #         x=X_smote
-    #         y=y_smote
-    #         y=nm.ravel(y)
-    #         x_train, x_test, y_train, y_test= train_test_split(x, y, test_size= 0.100, random_state=0)  
-    #         st_x= StandardScaler()    
-    #         x_train= st_x.fit_transform(x_train)    
-    #         x_test= st_x.transform(x_test)
-    #         classifier= RandomForestClassifier(n_estimators= 38, criterion="entropy")  
-    #         classifier.fit(x_train, y_train)
-    #         return classifier
-    
-# classifier=mlmodel.predict()
-# xldata=data.copy()
-# xldata=xldata.loc[:,xldata.columns!="outcome"]
-# xl=xldata.iloc[1]
-# for x in range(28):
-#     xl[x]=mlmodel.inverselabel(xldata.columns[x],xl[x])
-
-# #arrpred=[2,	5	,7,	1,	0	,13,	2,	4,	1,	1,	3	,4,	3,	2,	11,	747	,33	,0,	0	,1,	0	,0,	2	,1,	144	,46	,33,	1]
-# np_array = nm.array(xl)
-# xl=np_array.reshape(1, -1)
-# #print(arrpred)
-# xl=st_x.fit_transform(xl)
-# prediction=classifier.predict(xl)
-# print("prediction:",prediction)
 
 engine = create_engine('mysql://root:''@localhost/nih',pool_size=1000000, max_overflow=1000000)
 app = Flask(__name__)
@@ -127,16 +74,12 @@ CORS(app)
 ma=Marshmallow(app)
 db = SQLAlchemy(app)
 
-# @app.teardown_appcontext
-# def shutdown_session(exception=None):
-#     db.session.remove()
-
-#nih-dataset
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     usertype=db.Column(db.String(80), nullable=False)
+    organization=db.Column(db.String(80), nullable=False)
     # other fields go here
 
     def __repr__(self):
@@ -148,6 +91,7 @@ def register():
     username = data['username']
     password = data['password']
     usertype=data['usertype']
+    organization=data['organization']
     hashed_password = generate_password_hash(password)
 
     # check if username already exists
@@ -156,7 +100,7 @@ def register():
         return 'Username already exists', 400
 
     # create new user
-    new_user = User(username=username, password=hashed_password,usertype=usertype)
+    new_user = User(username=username, password=hashed_password,usertype=usertype,organization=organization)
     db.session.add(new_user)
     db.session.commit()
     return 'Success', 201
@@ -173,7 +117,7 @@ def login():
 
     if check_password_hash(user.password,password ):
         # Return a successful response
-        return jsonify({'message': 'Logged in successfully',"usertype":user.usertype,"username":user.username}), 200
+        return jsonify({'message': 'Logged in successfully',"usertype":user.usertype,"username":user.username,"organization":user.organization}), 200
     else:
         # Return an error if the password is incorrect
         return jsonify({'error': 'Invalid password'}), 401
@@ -442,36 +386,19 @@ class newDataset(db.Model):
 
 
 
-# class dataset(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(200), nullable=False)
-#     age = db.Column(db.Integer, nullable=False)
-    
-#     def __init__(self,name,age):
-#         self.age=age
-#         self.name=name
-#this will contain nih app new imports
-# class newImports(db.Model):
-#      id = db.Column(db.Integer, primary_key=True)
-#      name = db.Column(db.String(200), nullable=False)
-#      age = db.Column(db.Integer, nullable=False)
-#      NameofFile= db.Column(db.String(200), nullable=False)
 
-#      def __init__(self,name,age,NameofFile):
-#         self.age=age
-#         self.name=name
-#         self.NameofFile=NameofFile
-#this is notifications table
 class notifications(db.Model):
      id = db.Column(db.Integer, primary_key=True)
      username = db.Column(db.String(200), nullable=False)
      filename = db.Column(db.String(200), nullable=False)
      status=db.Column(db.String(200), nullable=False)
+     organization=db.Column(db.String(200), nullable=False)
 
-     def __init__(self,username,filename,status):
+     def __init__(self,username,filename,status,organization):
         self.username=username
         self.filename=filename
         self.status=status
+        self.organization=organization
         
 class ClassifierTable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -543,18 +470,6 @@ class reportCheck(db.Model):
         self.reportno=reportno
 
         
-        
-# @app.route('/add',methods=['POST'])
-# def add_newimport():
-#     importdata=request.get_json()
-    
-#     name = request.json['name']
-#     age = request.json['age']
-
-#     data = newImports(name,age)
-#     db.session.add(data)
-#     db.session.commit()
-    
 
 class nih_datasetSchema(ma.Schema):
     class Meta:
@@ -606,7 +521,7 @@ newImports_schema = newImportSchema(many=True)
 
 class notificationsSchema(ma.Schema):
     class Meta:
-        fields = ('id','username','filename','status')
+        fields = ('id','username','filename','status','organization')
 
 notification_schema = notificationsSchema()
 notifications_schema = notificationsSchema(many=True)
@@ -644,12 +559,15 @@ multipredictions_Schema=multipredictionSchema(many=True)
 def add_newnotification():
     username = request.json['username']
     filename = request.json['filename']
+    organization=request.json['organization']
     status=request.json['status']
 
     record = notifications(
 		username=username,
 		filename=filename,
-        status=status
+        status=status,
+        organization=organization
+
 		)
     db.session.add(record)
     db.session.commit()
@@ -1824,9 +1742,42 @@ def update_article(id):
     db.session.commit()
     return notification_schema.jsonify(notify)
 
+@app.route('/updateStatus/<int:id>', methods=['PUT'])
+def update_status(id):
+    record = notifications.query.get(id)
+    if record:
+        record.status = request.json['status']
+        db.session.commit()
+        return 'Column updated successfully', 200
+    else:
+        return 'Example not found', 404
+        
+@app.route('/get_and_insert_data', methods=['POST'])
+def get_and_insert_data():
+    id=request.json['id']
+    username = request.json['username']
+    filename = request.json['filename']
+    record = notifications.query.get(id)
+    if record:
+        record.status = "Accepted"
+        db.session.commit()
 
-# @app.route('/getnewdata',methods =['GET'])
-# def new
+    data = newDataset.query.filter_by(importedby=username, filename=filename).all()
+    if data:
+        inserted_data = [nih_dataset(country=d.country, education=d.education, employment=d.employment,
+                                      case_definition=d.case_definition, type_of_resistance=d.type_of_resistance, x_ray_count=d.x_ray_count,
+                                      organization=d.organization, affect_pleura=d.affect_pleura, overall_percent_of_abnormal_volume=d.overall_percent_of_abnormal_volume,
+                                      le_isoniazid=d.le_isoniazid,le_rifampicin=d.le_rifampicin, le_p_aminosalicylic_acid=d.le_p_aminosalicylic_acid, hain_isoniazid=d.hain_isoniazid,
+                                      hain_rifampicin=d.hain_rifampicin,period_start=d.period_start, period_end=d.period_end, period_span=d.period_span,
+                                      regimen_count=d.regimen_count,qure_peffusion=d.qure_peffusion, treatment_status=d.treatment_status, regimen_drug=d.regimen_drug,
+                                      comorbidity=d.comorbidity,ncbi_bioproject=d.ncbi_bioproject,
+                                      gene_name=d.gene_name,x_ray_exists=d.x_ray_exists, ct_exists=d.ct_exists, genomic_data_exists=d.genomic_data_exists,
+                                      qure_consolidation=d.qure_consolidation,outcome=d.outcome) for d in data]
+        db.session.bulk_save_objects(inserted_data)
+        db.session.commit()
+        return jsonify({'message': 'Data inserted successfully'}), 201
+    else:
+        return jsonify({'message': 'Data not found'}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)

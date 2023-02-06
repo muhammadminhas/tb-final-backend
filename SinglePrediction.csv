@@ -1,2 +1,2 @@
 country,education,employment,case_definition,type_of_resistance,x_ray_count,organization,affect_pleura,overall_percent_of_abnormal_volume,le_isoniazid,le_rifampicin,le_p_aminosalicylic_acid,hain_isoniazid,hain_rifampicin,period_start,period_end,period_span,regimen_count,qure_peffusion,treatment_status,regimen_drug,comorbidity,ncbi_bioproject,gene_name,x_ray_exists,ct_exists,genomic_data_exists,qure_consolidation,outcome
--99999,5,1,-99999,-99999,-99999,-99999,2,4,4,4,3,4,3,-99999,-99999,-99999,-99999,0,-99999,-99999,-99999,0,0,-99999,1,-99999,0,
+-99999,-99999,7,-99999,0,-99999,-99999,-99999,-99999,-99999,2,-99999,4,-99999,-99999,-99999,-99999,-99999,-99999,-99999,617,-99999,-99999,-99999,1,-99999,-99999,-99999,
